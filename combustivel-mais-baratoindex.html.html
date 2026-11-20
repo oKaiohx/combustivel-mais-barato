@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Combustível mais barato</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Inter:wght@400;500&display=swap">
+<style>
+:root{--bg:#f3f5f1;--surface:#fff;--ink:#16211d;--muted:#5b6a63;--line:#d9e0da;--accent:#0d6b4f;--accent-ink:#fff;--pump:#171c19;--pump-fg:#ffcf3f;--good:#0d6b4f;--bad:#a63a2b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101512;--surface:#19201c;--ink:#eef3ef;--muted:#9aa9a1;--line:#2b362f;--accent:#4fd1a1;--accent-ink:#06150f;--pump:#0a0d0b;--good:#4fd1a1;--bad:#f09080;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101512;--surface:#19201c;--ink:#eef3ef;--muted:#9aa9a1;--line:#2b362f;--accent:#4fd1a1;--accent-ink:#06150f;--pump:#0a0d0b;--good:#4fd1a1;--bad:#f09080;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+h1{font:700 clamp(28px,6vw,40px)/1.1 "Bricolage Grotesque",Inter,system-ui,sans-serif;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 20px;max-width:60ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px}
+.fuels{display:flex;flex-wrap:wrap;gap:8px}
+.fuels input{position:absolute;opacity:0;pointer-events:none}
+.fuels label{border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:500;background:var(--bg)}
+.fuels input:checked+label{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.fuels input:focus-visible+label,select:focus-visible,input[type=range]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.f{display:grid;gap:4px;font-size:14px;color:var(--muted)}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.maxv{color:var(--ink);font-weight:500}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin:20px 2px 10px;color:var(--muted);font-size:15px}
+.stats b{color:var(--ink);font-weight:500}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+li{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center}
+li.best{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.nome{font-weight:500}
+.meta{color:var(--muted);font-size:14px}
+.tag{display:inline-block;background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:0 7px;font-size:12px;font-weight:500;margin-left:6px;vertical-align:1px}
+.price{grid-row:1/3;grid-column:2;text-align:right}
+.lcd{display:inline-block;background:var(--pump);color:var(--pump-fg);font:700 26px/1 "Bricolage Grotesque",Inter,sans-serif;padding:9px 12px;border-radius:8px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.lcd small{font-size:13px;opacity:.8;margin-right:4px}
+.diff{display:block;font-size:13px;margin-top:4px}
+.diff.neg{color:var(--good)}.diff.pos{color:var(--bad)}
+.actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{display:inline-block;padding:8px 12px;border-radius:10px;font-weight:500;font-size:14px;text-decoration:none;border:1px solid var(--line);color:var(--ink);background:var(--bg)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,.geo:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.geo{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:9px 12px;cursor:pointer}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:20px;color:var(--muted)}
+.note{margin-top:20px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.lcd{transition:transform .15s}li:hover .lcd{transform:translateY(-1px)}}
+</style>
+</head>
+<body>
+<main>
+<h1>Combustível mais barato</h1>
+<p class="sub">Escolha o combustível, a cidade e o preço máximo. A lista mostra os postos do mais barato para o mais caro.</p>
+
+<section class="panel" aria-label="Filtros">
+  <div class="fuels" id="fuels" role="radiogroup" aria-label="Combustível"></div>
+  <div class="row">
+    <label class="f">Cidade<select id="cidade"></select></label>
+    <label class="f">Bandeira<select id="bandeira"></select></label>
+    <label class="f">Ordenar por<select id="ordem"><option value="preco">Menor preço</option><option value="dist" disabled>Mais perto de mim</option><option value="nome">Nome do posto</option></select></label>
+  </div>
+  <label class="f">Preço máximo: <span class="maxv" id="maxv"></span>
+    <input type="range" id="max" step="0.01"></label>
+  <div><button type="button" class="geo" id="geo">Usar minha localização</button> <span class="meta" id="geomsg"></span></div>
+</section>
+
+<div class="stats" id="stats" aria-live="polite"></div>
+<ul id="lista"></ul>
+<p class="note">Dados de exemplo, só para testar os filtros. A Podium aparece só em postos Petrobras, e nem todo posto vende Diesel S500 ou GNV. As posições dos postos de exemplo são aproximadas. O próximo passo é trocar pelos preços reais da ANP.</p>
+</main>
+
+<script>
+// [nome, cidade, bandeira, gasolina, etanol, diesel S10, GNV, diesel S500, gasolina Podium]
+var POSTOS=[
+["Posto Morato Centro","Francisco Morato","Ipiranga",6.49,4.59,6.19,null],
+["Auto Posto Estação","Francisco Morato","Shell",6.69,4.79,6.39,null],
+["Posto Jardim Alegria","Francisco Morato","Bandeira branca",6.29,4.45,6.09,null],
+["Posto Rodovia 1","Francisco Morato","Petrobras",6.55,4.65,6.25,4.89],
+["Posto Vila Guilherme","Francisco Morato","Bandeira branca",6.35,4.49,6.15,null],
+["Posto Franco Central","Franco da Rocha","Shell",6.59,4.69,6.29,null],
+["Auto Posto Serra","Franco da Rocha","Ipiranga",6.45,4.55,6.15,4.79],
+["Posto Estação Franco","Franco da Rocha","Petrobras",6.39,4.52,6.19,null],
+["Posto Parque Lanceiros","Franco da Rocha","Bandeira branca",6.25,4.39,6.05,null],
+["Posto Caieiras Norte","Caieiras","Petrobras",6.52,4.62,6.22,null],
+["Auto Posto Cantareira","Caieiras","Shell",6.72,4.82,6.42,null],
+["Posto Papel","Caieiras","Bandeira branca",6.33,4.47,6.13,4.69],
+["Posto Mairiporã Lago","Mairiporã","Ipiranga",6.61,4.71,6.31,null],
+["Auto Posto Mata","Mairiporã","Bandeira branca",6.42,4.56,6.18,null],
+["Posto Portal","Mairiporã","Shell",6.79,4.89,6.49,null],
+["Posto Pirituba","São Paulo","Petrobras",6.37,4.43,6.07,4.59],
+["Auto Posto Lapa","São Paulo","Shell",6.58,4.68,6.28,4.75],
+["Posto Freguesia","São Paulo","Ipiranga",6.47,4.53,6.17,null],
+["Posto Brasilândia","São Paulo","Bandeira branca",6.27,4.41,6.03,4.55],
+["Posto Perus","São Paulo","Petrobras",6.31,4.46,6.11,null]
+];
+var S500=[6.09,null,5.99,6.15,6.05,6.19,null,6.09,5.95,6.12,6.32,6.03,null,6.08,6.39,5.97,6.18,null,5.93,6.01];
+var POD=[null,null,null,7.29,null,null,null,7.19,null,7.39,null,null,null,null,null,7.25,null,null,null,7.22];
+POSTOS.forEach(function(p,i){p[7]=S500[i];p[8]=POD[i]});
+// posições aproximadas [lat, lng], na mesma ordem de POSTOS
+var COORDS=[[-23.2822,-46.7447],[-23.2790,-46.7380],[-23.2865,-46.7520],[-23.2750,-46.7490],[-23.2850,-46.7395],[-23.3226,-46.7274],[-23.3180,-46.7330],[-23.3290,-46.7200],[-23.3150,-46.7250],[-23.3639,-46.7406],[-23.3590,-46.7330],[-23.3700,-46.7450],[-23.3188,-46.5873],[-23.3230,-46.5800],[-23.3130,-46.5940],[-23.4836,-46.7276],[-23.5230,-46.7020],[-23.4890,-46.6900],[-23.4560,-46.6930],[-23.4040,-46.7500]];
+POSTOS.forEach(function(p,i){p[9]=COORDS[i][0];p[10]=COORDS[i][1]});
+var here=null;
+function km(a,b,c,d){var r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)*Math.sin(y/2);return 12742*Math.asin(Math.sqrt(h))}
+var FUELS=[["Gasolina comum",3],["Gasolina Podium",8],["Etanol",4],["Diesel S10",5],["Diesel S500",7],["GNV",6]];
+var $=function(i){return document.getElementById(i)};
+var fuel=3;
+function brl(v){return v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+function opts(sel,vals,all){sel.innerHTML="";[all].concat(vals).forEach(function(v,i){var o=document.createElement("option");o.value=i?v:"";o.textContent=v;sel.appendChild(o)})}
+function uniq(i){return POSTOS.map(function(p){return p[i]}).filter(function(v,k,a){return a.indexOf(v)===k}).sort()}
+
+FUELS.forEach(function(f,i){
+  var id="f"+i;
+  var inp=document.createElement("input");inp.type="radio";inp.name="fuel";inp.id=id;inp.value=f[1];inp.checked=i===0;
+  var lb=document.createElement("label");lb.htmlFor=id;lb.textContent=f[0];
+  inp.addEventListener("change",function(){fuel=f[1];resetMax();render()});
+  $("fuels").appendChild(inp);$("fuels").appendChild(lb);
+});
+opts($("cidade"),uniq(1),"Todas as cidades");
+opts($("bandeira"),uniq(2),"Todas as bandeiras");
+
+function resetMax(){
+  var v=POSTOS.map(function(p){return p[fuel]}).filter(Boolean);
+  var lo=Math.floor(Math.min.apply(null,v)*10)/10,hi=Math.ceil(Math.max.apply(null,v)*10)/10;
+  var m=$("max");m.min=lo;m.max=hi;m.value=hi;
+}
+
+function render(){
+  var max=parseFloat($("max").value),c=$("cidade").value,b=$("bandeira").value;
+  $("maxv").textContent="R$ "+brl(max);
+  var base=POSTOS.filter(function(p){return p[fuel]&&(!c||p[1]===c)&&(!b||p[2]===b)});
+  var avg=base.length?base.reduce(function(s,p){return s+p[fuel]},0)/base.length:0;
+  var res=base.filter(function(p){return p[fuel]<=max+0.0001});
+  var ord=$("ordem").value;
+  res.sort(ord==="nome"?function(x,y){return x[0].localeCompare(y[0],"pt-BR")}:(ord==="dist"&&here)?function(x,y){return x[11]-y[11]}:function(x,y){return x[fuel]-y[fuel]});
+  var best=base.length?Math.min.apply(null,base.map(function(p){return p[fuel]})):0;
+  var ul=$("lista");ul.innerHTML="";
+  if(!res.length){
+    $("stats").textContent="";
+    ul.innerHTML='<li class="empty" style="display:block">Nenhum posto encontrado. Aumente o preço máximo ou escolha outra cidade ou bandeira.</li>';
+    return;
+  }
+  $("stats").innerHTML="<span><b>"+res.length+"</b> "+(res.length===1?"posto":"postos")+"</span><span>Menor preço: <b>R$ "+brl(best)+"</b></span><span>Média da seleção: <b>R$ "+brl(avg)+"</b></span>";
+  res.forEach(function(p){
+    var d=p[fuel]-avg,li=document.createElement("li");
+    if(p[fuel]===best)li.className="best";
+    var nome=document.createElement("span");nome.className="nome";nome.textContent=p[0];
+    if(p[fuel]===best){var t=document.createElement("span");t.className="tag";t.textContent="Mais barato";nome.appendChild(t)}
+    var meta=document.createElement("span");meta.className="meta";meta.textContent=p[1]+" – "+p[2]+(here?" – "+p[11].toLocaleString("pt-BR",{maximumFractionDigits:1})+" km":"");
+    var pr=document.createElement("div");pr.className="price";
+    pr.innerHTML='<span class="lcd"><small>R$</small>'+brl(p[fuel])+'</span><span class="diff '+(d<=0?"neg":"pos")+'">'+(d<=0?"−":"+")+" R$ "+brl(Math.abs(d))+' da média</span>';
+    var ac=document.createElement("div");ac.className="actions";
+    var ll=p[9]+","+p[10];
+    [["Como chegar","https://www.google.com/maps/dir/?api=1&destination="+ll,"btn main"],["Ver no mapa","https://www.google.com/maps/search/?api=1&query="+ll,"btn"]].forEach(function(l){
+      var a=document.createElement("a");a.href=l[1];a.target="_blank";a.rel="noopener noreferrer";a.className=l[2];a.textContent=l[0];ac.appendChild(a)});
+    li.appendChild(nome);li.appendChild(meta);li.appendChild(pr);li.appendChild(ac);ul.appendChild(li);
+  });
+}
+["cidade","bandeira","ordem"].forEach(function(i){$(i).addEventListener("change",render)});
+$("max").addEventListener("input",render);
+$("geo").addEventListener("click",function(){
+  var msg=$("geomsg");
+  if(!navigator.geolocation){msg.textContent="Seu navegador não permite localização.";return}
+  msg.textContent="Buscando sua localização...";
+  navigator.geolocation.getCurrentPosition(function(pos){
+    here=[pos.coords.latitude,pos.coords.longitude];
+    POSTOS.forEach(function(p){p[11]=km(here[0],here[1],p[9],p[10])});
+    var o=$("ordem").querySelector('option[value="dist"]');o.disabled=false;$("ordem").value="dist";
+    msg.textContent="Localização ativada.";render();
+  },function(){msg.textContent="Não foi possível obter sua localização. Libere a permissão no navegador."},{timeout:10000});
+});
+resetMax();render();
+</script>
+</body>
+</html>
